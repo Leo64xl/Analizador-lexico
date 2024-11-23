@@ -76,7 +76,7 @@ const Analyzer = () => {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
         } else if (!/;$/.test(line) && line !== "{" && line !== "}") {
           syntacticErrors.push(
-            `Error sintáctico en la línea ${index + 1}: ${line}`
+            `Error sintáctico en la línea ${index + 1}: falta un punto y coma al final`
           );
         } else {
           semanticErrors.push(
@@ -112,6 +112,60 @@ const Analyzer = () => {
         `Error sintáctico: número desigual de paréntesis de apertura y cierre ( ).`
       );
     }
+
+    // Check for unmatched double quotes
+    const openDoubleQuotes = (code.match(/"/g) || []).length;
+    if (openDoubleQuotes % 2 !== 0) {
+      syntacticErrors.push(
+        `Error sintáctico: número desigual de comillas dobles " ".`
+      );
+    }
+
+    // Check for unmatched single quotes
+    const openSingleQuotes = (code.match(/'/g) || []).length;
+    if (openSingleQuotes % 2 !== 0) {
+      syntacticErrors.push(
+        `Error sintáctico: número desigual de comillas simples ' '.`
+      );
+    }
+
+    // Semantic error checks
+    const semanticErrorChecks = [
+      {
+        condition: (code) => /categoria\s*==\s*'[^12]'/.test(code),
+        message: "Entrada Inválida para categoria: Se espera '1' o '2'.",
+      },
+      {
+        condition: (code) => /sueldo_diario\s*<\s*0/.test(code),
+        message: "Valores Negativos para sueldo_diario: No se permiten valores negativos.",
+      },
+      {
+        condition: (code) => /faltas\s*<\s*0/.test(code),
+        message: "Valores Negativos para faltas: No se permiten valores negativos.",
+      },
+      {
+        condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*;/.test(code),
+        message: "Token invalido en el cálculo de sueldo_semanal.",
+      },
+      {
+        condition: (code) => !/sueldo_total\s*\+=\s*sueldo_semanal\s*;/.test(code),
+        message: "Token invalido en el cálculo de sueldo_total.",
+      },
+      {
+        condition: (code) => !/printf\s*\(\s*"Empleado %d:\s*Su\s*sueldo\s*semanal\s*es:\s*\$%.2f\\n"\s*,\s*c\s*,\s*sueldo_semanal\s*\)\s*;/.test(code),
+        message: "Token invalido en la impresión de sueldo_semanal.",
+      },
+      {
+        condition: (code) => !/printf\s*\(\s*"El\s*monto\s*total\s*de\s*sueldos\s*es:\s*\$%.2f\\n"\s*,\s*sueldo_total\s*\)\s*;/.test(code),
+        message: "Token invalido en la impresión de sueldo_total.",
+      },      
+    ];
+
+    semanticErrorChecks.forEach((check) => {
+      if (check.condition(code)) {
+        semanticErrors.push(check.message);
+      }
+    });
 
     setErrors({
       lexical: lexicalErrors,
@@ -191,7 +245,7 @@ int main() {
         />
       </div>
       <button onClick={validateCode}>
-        <IoCheckmarkCircle /> Validar Código
+         Validar Código <IoCheckmarkCircle />
       </button>
       {validated && errors.empty && (
         <div>
