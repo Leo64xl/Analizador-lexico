@@ -16,8 +16,13 @@
   margin-left: 100px;
 }
 
-h2, h3 {
+h2 {
   color: #ffffff;
+  text-align: center;
+}
+
+h3 {
+  color: #5cb85c;
   text-align: center;
 }
 

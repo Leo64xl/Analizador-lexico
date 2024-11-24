@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { IoAlertCircle, IoBug, IoCheckmarkCircle, IoCopy, IoWarning } from "react-icons/io5"; 
+import { IoAlertCircle, IoBug, IoCheckmarkCircle, IoCopy, IoLogoGithub, IoWarning } from "react-icons/io5"; 
 import "./Analyzer.css";
+//import { Link } from "react-router-dom";
 
 const Analyzer = () => {
   const [code, setCode] = useState("");
@@ -17,7 +18,7 @@ const Analyzer = () => {
     /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*;$/;
   //const functionRegex = /^\w+\s+\w+\s*\(.*\)\s*{$/;
   const mainFunctionRegex = /^int\s+main\s*\(\s*\)\s*{$/;
-  const forLoopRegex = /^for\s*\(.*;.*;.*\)\s*{$/;
+  const forLoopRegex = /^for\s*\(c\s*=\s*1;\s*c\s*<=\s*50;\s*c\+\+\)\s*{$/;
   const ifElseGroupRegex =
     /^(if\s*\(.*\)\s*{)|(else\s+if\s*\(.*\)\s*{)|(else\s*{)$/;
   const printfRegex = /^printf\s*\(\s*".*"\s*(,\s*\w+)*\s*\)\s*;$/;
@@ -74,15 +75,15 @@ const Analyzer = () => {
           );
         } else if (/[^a-zA-Z0-9_#<>\s{};]/.test(line) || (line.startsWith("return") && !returnRegex.test(line))) {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
+        } else if (!/float\s+\w+/.test(line)) {
+          lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
         } else if (!/;$/.test(line) && line !== "{" && line !== "}") {
           syntacticErrors.push(
             `Error sintáctico en la línea ${index + 1}: falta un punto y coma al final`
           );
-        } else {
-          semanticErrors.push(
-            `Error semántico en la línea ${index + 1}: ${line}`
-          );
-        }
+        } else if (line.startsWith("for") && !forLoopRegex.test(line)) {
+          syntacticErrors.push(`Error sintáctico en la línea ${index + 1}: ${line}`);
+        }        
       }
 
       // Check for extra tokens at end of #include directive
@@ -145,20 +146,88 @@ const Analyzer = () => {
       },
       {
         condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*;/.test(code),
-        message: "Token invalido en el cálculo de sueldo_semanal.",
+        message: "Token no valido en el cálculo de sueldo_semanal.",
       },
       {
         condition: (code) => !/sueldo_total\s*\+=\s*sueldo_semanal\s*;/.test(code),
-        message: "Token invalido en el cálculo de sueldo_total.",
+        message: "Error en el cálculo de sueldo_total.",
       },
       {
-        condition: (code) => !/printf\s*\(\s*"Empleado %d:\s*Su\s*sueldo\s*semanal\s*es:\s*\$%.2f\\n"\s*,\s*c\s*,\s*sueldo_semanal\s*\)\s*;/.test(code),
-        message: "Token invalido en la impresión de sueldo_semanal.",
+        condition: (code) => /printf\s*;/.test(code),
+        message: "Error en la impresión de empleado.",
       },
       {
-        condition: (code) => !/printf\s*\(\s*"El\s*monto\s*total\s*de\s*sueldos\s*es:\s*\$%.2f\\n"\s*,\s*sueldo_total\s*\)\s*;/.test(code),
-        message: "Token invalido en la impresión de sueldo_total.",
-      },      
+        condition: (code) => !/printf\s*\(\s*"El\s*monto\s*total\s*de\s*sueldos\s*es:\s*\$%.2f\\n"\s*,\s*sueldo_total\s*\)\s*/.test(code),
+        message: "Error en la impresión de sueldo_total.",
+      },
+      {
+        condition: (code) => !/float\s+sueldo_diario\s*,\s*sueldo_semanal\s*,\s*sueldo_total\s*=\s*0\s*/.test(code),
+        message: "Error al leer el nombre de las variables.",
+      },
+      {
+        condition: (code) => !/int\s+no_empleado\s*,\s*edad\s*,\s*faltas\s*/.test(code),
+        message: "Error al leer el nombre de las variables.",
+      },
+      {
+        condition: (code) => !/char\s+categoria\s*/.test(code),
+        message: "Error al leer el nombre de la variable.",
+      },
+      {
+        condition: (code) => !/int\s+c\s*/.test(code),
+        message: "Error al leer el nombre de la variable.",
+      },       
+      {
+        condition: (code) => !/"Empleado %d:\\n", c/.test(code),
+        message: "Token no valido en la impresion de empleado.",
+      },
+      {
+        condition: (code) => !/\("Escribe tu categoría \(1 o 2\): "/.test(code),
+        message: "Token no valido en la impresion de categoria.",
+      },
+      {
+        condition: (code) => !/" %c", &categoria/.test(code),
+        message: "Token no valido en la lectura de 'categoria'.",
+      },
+      {
+        condition: (code) => !/comision;/.test(code),
+        message: "Variable escrita inexistente.",
+      },
+      {
+        condition: (code) => !/categoria == '1'/.test(code),
+        message: "Tokens no validos en categoria 1.",
+      },
+      {
+        condition: (code) => !/comision = 0.2;/.test(code),
+        message: "Tokens no validos en comision 0.2.",
+      },
+      {
+        condition: (code) => !/categoria == '2'/.test(code),
+        message: "Tokens no validos en categoria 2.",
+      },
+      {
+        condition: (code) => !/comision = 0.1;/.test(code),
+        message: "Tokens no validos en comision 0.1.",
+      },
+      {
+        condition: (code) => !/"%f", &sueldo_diario/.test(code),
+        message: "Token no valido en la lectura de 'sueldo_diario'.",
+      },
+      {
+        condition: (code) => !/"%d", &faltas/.test(code),
+        message: "Token no valido en la lectura de 'faltas'.",
+      },
+      {
+        condition: (code) => !/sueldo_semanal < 0/.test(code),
+        message: "Token no valido en 'sueldo_semanal < 0'.",
+      },
+      {
+        condition: (code) => !/sueldo_semanal = 0;/.test(code),
+        message: "Error en la asignación de 'sueldo_semanal = 0;'.",
+      },
+      {
+        condition: (code) => !/"Empleado %d: Su sueldo semanal es: \$%.2f\\n", c, sueldo_semanal/.test(code),
+        message: "Token no valido en la impresión de 'sueldo semanal'.",
+      },
     ];
 
     semanticErrorChecks.forEach((check) => {
@@ -229,10 +298,15 @@ int main() {
 
   return (
     <div className="container">
+    <div className="logillo">
+      <a href="https://github.com/Leo64xl" target="_blank" >
+        <IoLogoGithub size={40} color="ffffff"/> 
+      </a>
+    </div>
       <div className="header">
-        <h2>Código Corregido en C</h2>
+        <h2>*Código Corregido en C:</h2>
         <button className="button2" onClick={copyToClipboard}>
-          <IoCopy /> Copiar Código
+           Copiar Código <IoCopy />
         </button>
       </div>
       <div className="textarea-container">
