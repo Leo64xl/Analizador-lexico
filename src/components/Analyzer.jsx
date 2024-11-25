@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { IoAlertCircle, IoBug, IoCheckmarkCircle, IoCopy, IoLogoGithub, IoWarning } from "react-icons/io5"; 
+import {
+  IoAlertCircle,
+  IoBug,
+  IoCheckmarkCircle,
+  IoCopy,
+  IoLogoGithub,
+  IoWarning,
+} from "react-icons/io5";
 import "./Analyzer.css";
 
 const Analyzer = () => {
@@ -10,12 +17,11 @@ const Analyzer = () => {
     semantic: [],
     empty: false,
   });
-  const [validated, setValidated] = useState(false); 
+  const [validated, setValidated] = useState(false);
 
   const includeRegex = /^#include\s*<[^<>]+>$/;
   const typeRegex =
-    /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*$/;
-  //const functionRegex = /^\w+\s+\w+\s*\(.*\)\s*{$/;
+    /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*;$/;
   const mainFunctionRegex = /^int\s+main\s*\(\s*\)\s*{$/;
   const forLoopRegex = /^for\s*\(c\s*=\s*1;\s*c\s*<=\s*50;\s*c\+\+\)\s*{$/;
   const ifElseGroupRegex =
@@ -30,7 +36,7 @@ const Analyzer = () => {
     /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*;$/;
 
   const validateCode = () => {
-    setValidated(true); 
+    setValidated(true);
     if (code.trim() === "") {
       setErrors({
         lexical: [],
@@ -71,19 +77,82 @@ const Analyzer = () => {
           syntacticErrors.push(
             `Error sintáctico en la línea ${index + 1}: ${line}`
           );
-        } else if (/[^a-zA-Z0-9_#<>\s{}]/.test(line) || (line.startsWith("return") && !returnRegex.test(line))) {
+        } else if (
+          /[^a-zA-Z0-9_#<>\s{}]/.test(line) ||
+          (line.startsWith("return") && !returnRegex.test(line))
+        ) {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
         } else if (!/float\s+\w+/.test(line)) {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
         } else if (!/;$/.test(line) && line !== "{" && line !== "}") {
           syntacticErrors.push(
-            `Error sintáctico en la línea ${index + 1}: falta un punto y coma al final`
+            `Error sintáctico en la línea ${
+              index + 1
+            }: falta un punto y coma al final`
           );
-        } else if (line.startsWith("for") && !forLoopRegex.test(line)) {
-          syntacticErrors.push(`Error sintáctico en la línea ${index + 1}: ${line}`);
-        }        
+        } else if (line.startsWith("return") && !returnRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintactico en la línea ${index + 1}: ${line}`
+          );
+        } else if (line.startsWith("printf") && !printfRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${
+              index + 1
+            }: falta un punto y coma al final`
+          );
+        } else if (line.startsWith("int") && !typeRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (
+          line.startsWith("int") &&
+          !variableDeclarationRegex.test(line)
+        ) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (
+          line.startsWith("float") &&
+          !variableDeclarationRegex.test(line)
+        ) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (
+          line.startsWith("char") &&
+          !variableDeclarationRegex.test(line)
+        ) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (
+          line.startsWith("double") &&
+          !variableDeclarationRegex.test(line)
+        ) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (line.startsWith("printf") && !printfRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (line.startsWith("scanf") && !scanfRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (line.startsWith("return") && !returnRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${index + 1}: ${line}`
+          );
+        } else if (line.startsWith("continue") && !continueRegex.test(line)) {
+          syntacticErrors.push(
+            `Error sintáctico en la línea ${
+              index + 1
+            }: falta un punto y coma al final de 'continue'`
+          );
+        }
       }
-      
+
       if (line.startsWith("#include") && !/^#include\s*<[^<>]+>$/.test(line)) {
         syntacticErrors.push(
           `Error sintáctico en la línea ${
@@ -123,62 +192,13 @@ const Analyzer = () => {
       );
     }
 
-    const sintacticErrorChecks = [
-      {
-        condition: (code) => !/sueldo_diario,\s*sueldo_semanal,\s*sueldo_total\s*= \s*0;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variables sueldo_diario, sueldo_semanal y sueldo_total = 0.",
-      },
-      {
-        condition: (code) => !/no_empleado,\s*edad,\s*faltas;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variables no_empleado, edad, y faltas.",
-      },
-      {
-        condition: (code) => !/categoria\s*;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de la variable categoria."
-      },
-      {
-        condition: (code) => !/c\s*;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de la variable c."
-      },
-      {
-        condition: (code) => !/comision\s*;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variable comision."
-      },      
-      {
-        condition: (code) => !/comision\s*=\s*0.2;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la llamada a la variable comision = 0.2."
-      }, 
-      {
-        condition: (code) => !/comision\s*=\s*0.1;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la llamada a la variable comision = 0.1."
-      },
-      {
-        condition: (code) => !/continue;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' al final de continue."
-      },
-      {
-        condition: (code) => !/sueldo_semanal\s*=\s*0;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' despues de la llamada a la variable sueldo_semanal = 0."
-      },
-      {
-        condition: (code) => !/sueldo_semanal;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' al final del metodo sueldo_total += sueldo_semanal."
-      },
-      {
-        condition: (code) => !/return\s*0;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' al final de return 0."
-      }, 
-      {
-        condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*;/.test(code),
-        message: "Error Sintáctico: Hace falta un punto y coma ';' al final del metodo sueldo_semanal = (sueldo_diario * 5) + (sueldo_diario * 5 * comision) - (faltas * sueldo_diario)."
-      },       
-    ]
-
-    sintacticErrorChecks.forEach((check) => {
-      if (check.condition(code)) {
-        syntacticErrors.push(check.message);
-      }
-    });
+    const openSquareBrackets = (code.match(/\[/g) || []).length;
+    const closeSquareBrackets = (code.match(/\]/g) || []).length;
+    if (openSquareBrackets !== closeSquareBrackets) {
+      syntacticErrors.push(
+        `Error sintáctico: número desigual de corchetes de apertura y cierre [ ].`
+      );
+    }
 
     const semanticErrorChecks = [
       {
