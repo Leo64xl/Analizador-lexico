@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { IoAlertCircle, IoBug, IoCheckmarkCircle, IoCopy, IoLogoGithub, IoWarning } from "react-icons/io5"; 
 import "./Analyzer.css";
-//import { Link } from "react-router-dom";
 
 const Analyzer = () => {
   const [code, setCode] = useState("");
@@ -11,11 +10,11 @@ const Analyzer = () => {
     semantic: [],
     empty: false,
   });
-  const [validated, setValidated] = useState(false); // Nuevo estado para rastrear si se ha validado
+  const [validated, setValidated] = useState(false); 
 
   const includeRegex = /^#include\s*<[^<>]+>$/;
   const typeRegex =
-    /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*;$/;
+    /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*$/;
   //const functionRegex = /^\w+\s+\w+\s*\(.*\)\s*{$/;
   const mainFunctionRegex = /^int\s+main\s*\(\s*\)\s*{$/;
   const forLoopRegex = /^for\s*\(c\s*=\s*1;\s*c\s*<=\s*50;\s*c\+\+\)\s*{$/;
@@ -31,7 +30,7 @@ const Analyzer = () => {
     /^(int|float|char|double)\s+\w+(\s*=\s*[\d.]+)?\s*(,\s*\w+(\s*=\s*[\d.]+)?)*\s*;$/;
 
   const validateCode = () => {
-    setValidated(true); // Marcar como validado
+    setValidated(true); 
     if (code.trim() === "") {
       setErrors({
         lexical: [],
@@ -68,12 +67,11 @@ const Analyzer = () => {
         line !== "{" &&
         line !== "}"
       ) {
-        // Classify errors
         if (line.startsWith("int main") && !mainFunctionRegex.test(line)) {
           syntacticErrors.push(
             `Error sintáctico en la línea ${index + 1}: ${line}`
           );
-        } else if (/[^a-zA-Z0-9_#<>\s{};]/.test(line) || (line.startsWith("return") && !returnRegex.test(line))) {
+        } else if (/[^a-zA-Z0-9_#<>\s{}]/.test(line) || (line.startsWith("return") && !returnRegex.test(line))) {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
         } else if (!/float\s+\w+/.test(line)) {
           lexicalErrors.push(`Error léxico en la línea ${index + 1}: ${line}`);
@@ -85,8 +83,7 @@ const Analyzer = () => {
           syntacticErrors.push(`Error sintáctico en la línea ${index + 1}: ${line}`);
         }        
       }
-
-      // Check for extra tokens at end of #include directive
+      
       if (line.startsWith("#include") && !/^#include\s*<[^<>]+>$/.test(line)) {
         syntacticErrors.push(
           `Error sintáctico en la línea ${
@@ -96,7 +93,6 @@ const Analyzer = () => {
       }
     });
 
-    // Check for unmatched braces
     const openBraces = (code.match(/{/g) || []).length;
     const closeBraces = (code.match(/}/g) || []).length;
     if (openBraces !== closeBraces) {
@@ -105,7 +101,6 @@ const Analyzer = () => {
       );
     }
 
-    // Check for unmatched parentheses
     const openParentheses = (code.match(/\(/g) || []).length;
     const closeParentheses = (code.match(/\)/g) || []).length;
     if (openParentheses !== closeParentheses) {
@@ -114,7 +109,6 @@ const Analyzer = () => {
       );
     }
 
-    // Check for unmatched double quotes
     const openDoubleQuotes = (code.match(/"/g) || []).length;
     if (openDoubleQuotes % 2 !== 0) {
       syntacticErrors.push(
@@ -122,7 +116,6 @@ const Analyzer = () => {
       );
     }
 
-    // Check for unmatched single quotes
     const openSingleQuotes = (code.match(/'/g) || []).length;
     if (openSingleQuotes % 2 !== 0) {
       syntacticErrors.push(
@@ -130,7 +123,63 @@ const Analyzer = () => {
       );
     }
 
-    // Semantic error checks
+    const sintacticErrorChecks = [
+      {
+        condition: (code) => !/sueldo_diario,\s*sueldo_semanal,\s*sueldo_total\s*= \s*0;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variables sueldo_diario, sueldo_semanal y sueldo_total = 0.",
+      },
+      {
+        condition: (code) => !/no_empleado,\s*edad,\s*faltas;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variables no_empleado, edad, y faltas.",
+      },
+      {
+        condition: (code) => !/categoria\s*;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de la variable categoria."
+      },
+      {
+        condition: (code) => !/c\s*;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de la variable c."
+      },
+      {
+        condition: (code) => !/comision\s*;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la declaración de las variable comision."
+      },      
+      {
+        condition: (code) => !/comision\s*=\s*0.2;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la llamada a la variable comision = 0.2."
+      }, 
+      {
+        condition: (code) => !/comision\s*=\s*0.1;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' después de la llamada a la variable comision = 0.1."
+      },
+      {
+        condition: (code) => !/continue;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' al final de continue."
+      },
+      {
+        condition: (code) => !/sueldo_semanal\s*=\s*0;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' despues de la llamada a la variable sueldo_semanal = 0."
+      },
+      {
+        condition: (code) => !/sueldo_semanal;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' al final del metodo sueldo_total += sueldo_semanal."
+      },
+      {
+        condition: (code) => !/return\s*0;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' al final de return 0."
+      }, 
+      {
+        condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*;/.test(code),
+        message: "Error Sintáctico: Hace falta un punto y coma ';' al final del metodo sueldo_semanal = (sueldo_diario * 5) + (sueldo_diario * 5 * comision) - (faltas * sueldo_diario)."
+      },       
+    ]
+
+    sintacticErrorChecks.forEach((check) => {
+      if (check.condition(code)) {
+        syntacticErrors.push(check.message);
+      }
+    });
+
     const semanticErrorChecks = [
       {
         condition: (code) => /categoria\s*==\s*'[^12]'/.test(code),
@@ -145,11 +194,11 @@ const Analyzer = () => {
         message: "Valores Negativos para faltas: No se permiten valores negativos.",
       },
       {
-        condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*;/.test(code),
+        condition: (code) => !/sueldo_semanal\s*=\s*\(sueldo_diario\s*\*\s*5\s*\)\s*\+\s*\(sueldo_diario\s*\*\s*5\s*\*\s*comision\)\s*-\s*\(faltas\s*\*\s*sueldo_diario\)\s*/.test(code),
         message: "Token no valido en el cálculo de sueldo_semanal.",
       },
       {
-        condition: (code) => !/sueldo_total\s*\+=\s*sueldo_semanal\s*;/.test(code),
+        condition: (code) => !/sueldo_total\s*\+=\s*sueldo_semanal\s*/.test(code),
         message: "Error en el cálculo de sueldo_total.",
       },
       {
@@ -189,7 +238,7 @@ const Analyzer = () => {
         message: "Token no valido en la lectura de 'categoria'.",
       },
       {
-        condition: (code) => !/comision;/.test(code),
+        condition: (code) => !/comision/.test(code),
         message: "Variable escrita inexistente.",
       },
       {
@@ -197,7 +246,7 @@ const Analyzer = () => {
         message: "Tokens no validos en categoria 1.",
       },
       {
-        condition: (code) => !/comision = 0.2;/.test(code),
+        condition: (code) => !/comision = 0.2/.test(code),
         message: "Tokens no validos en comision 0.2.",
       },
       {
@@ -205,7 +254,7 @@ const Analyzer = () => {
         message: "Tokens no validos en categoria 2.",
       },
       {
-        condition: (code) => !/comision = 0.1;/.test(code),
+        condition: (code) => !/comision = 0.1/.test(code),
         message: "Tokens no validos en comision 0.1.",
       },
       {
@@ -221,7 +270,7 @@ const Analyzer = () => {
         message: "Token no valido en 'sueldo_semanal < 0'.",
       },
       {
-        condition: (code) => !/sueldo_semanal = 0;/.test(code),
+        condition: (code) => !/sueldo_semanal = 0/.test(code),
         message: "Error en la asignación de 'sueldo_semanal = 0;'.",
       },
       {
@@ -281,8 +330,7 @@ int main() {
 
         sueldo_total += sueldo_semanal;
 
-        printf("Empleado %d: Su sueldo semanal es: $%.2f\\n", c, sueldo_semanal);
-        printf("\\n");
+      printf("Empleado %d: Su sueldo semanal es: $%.2f\\n", c, sueldo_semanal);
     }
 
     printf("El monto total de sueldos es: $%.2f\\n", sueldo_total);
